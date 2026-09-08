@@ -9,6 +9,19 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/migrate', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return response('<pre style="background:#222;color:#a6e22e;padding:20px;font-family:monospace;">' . 
+            htmlspecialchars(\Illuminate\Support\Facades\Artisan::output()) . 
+            "\n[SUCCESS] Migrations completed successfully!</pre>");
+    } catch (\Throwable $e) {
+        return response('<pre style="background:#222;color:#f92672;padding:20px;font-family:monospace;">[ERROR] ' . 
+            htmlspecialchars($e->getMessage()) . "\n" . 
+            htmlspecialchars($e->getTraceAsString()) . '</pre>', 500);
+    }
+});
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

@@ -56,7 +56,11 @@ if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY']) && empty($_SERVER['APP_K
 }
 
 if (empty(getenv('SESSION_DRIVER')) && empty($_ENV['SESSION_DRIVER']) && empty($_SERVER['SESSION_DRIVER'])) {
-    $envVars['SESSION_DRIVER'] = 'cookie';
+    $envVars['SESSION_DRIVER'] = 'file';
+}
+
+if (empty(getenv('SESSION_LIFETIME')) && empty($_ENV['SESSION_LIFETIME']) && empty($_SERVER['SESSION_LIFETIME'])) {
+    $envVars['SESSION_LIFETIME'] = '120';
 }
 
 if (empty(getenv('CACHE_STORE')) && empty($_ENV['CACHE_STORE']) && empty($_SERVER['CACHE_STORE'])) {
@@ -68,11 +72,16 @@ if (empty(getenv('LOG_CHANNEL')) && empty($_ENV['LOG_CHANNEL']) && empty($_SERVE
     $envVars['LOG_CHANNEL'] = 'stderr';
 }
 
-// If DB_CONNECTION is sqlite (default) and no DB file configured, avoid read-only filesystem crash
+// If DB_CONNECTION is sqlite (default) and no DB file configured, copy base database if available
 if ((getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'sqlite')) === 'sqlite') {
     $sqlitePath = '/tmp/storage/database.sqlite';
-    if (!file_exists($sqlitePath)) {
-        @touch($sqlitePath);
+    $baseDb = dirname(__DIR__) . '/database/database.sqlite';
+    if (!file_exists($sqlitePath) || filesize($sqlitePath) === 0) {
+        if (file_exists($baseDb) && filesize($baseDb) > 0) {
+            @copy($baseDb, $sqlitePath);
+        } else {
+            @touch($sqlitePath);
+        }
     }
     if (empty(getenv('DB_DATABASE')) && empty($_ENV['DB_DATABASE'])) {
         $envVars['DB_DATABASE'] = $sqlitePath;
