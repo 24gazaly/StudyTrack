@@ -1,26 +1,7 @@
 {
-    "version": 2,
-    "framework": null,
-    "outputDirectory": "public",
-    "buildCommand": "npm run build",
-    "functions": {
-        "api/index.php": {
-            "runtime": "vercel-php@0.9.0",
-            "includeFiles": "{public/**,database/**}"
-        }
-    },
-    "routes": [
-        {
-            "src": "/build/(.*)",
-            "dest": "/build/$1"
-        },
-        {
-            "src": "/(favicon.ico|robots.txt|storage/(.*))",
-            "dest": "/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/api/index.php"
-        }
-    ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "regions": ["sin1"]
 }
