@@ -45,11 +45,39 @@ foreach ($envVars as $key => $val) {
     $_SERVER[$key] = $val;
 }
 
+// Fallback environment configurations for serverless environment
+if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY']) && empty($_SERVER['APP_KEY'])) {
+    $envVars['APP_KEY'] = 'base64:8Cmd4E2JkjqA/GkDhtgSQMI5pRqsJ7KWUrhEF0PvX7U=';
+}
+
+if (empty(getenv('SESSION_DRIVER')) && empty($_ENV['SESSION_DRIVER']) && empty($_SERVER['SESSION_DRIVER'])) {
+    $envVars['SESSION_DRIVER'] = 'cookie';
+}
+
+if (empty(getenv('CACHE_STORE')) && empty($_ENV['CACHE_STORE']) && empty($_SERVER['CACHE_STORE'])) {
+    $envVars['CACHE_STORE'] = 'array';
+}
+
 // Default LOG_CHANNEL to stderr so Laravel errors appear in Vercel Function logs
-if (!getenv('LOG_CHANNEL') && empty($_ENV['LOG_CHANNEL'])) {
-    putenv('LOG_CHANNEL=stderr');
-    $_ENV['LOG_CHANNEL'] = 'stderr';
-    $_SERVER['LOG_CHANNEL'] = 'stderr';
+if (empty(getenv('LOG_CHANNEL')) && empty($_ENV['LOG_CHANNEL']) && empty($_SERVER['LOG_CHANNEL'])) {
+    $envVars['LOG_CHANNEL'] = 'stderr';
+}
+
+// If DB_CONNECTION is sqlite (default) and no DB file configured, avoid read-only filesystem crash
+if ((getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'sqlite')) === 'sqlite') {
+    $sqlitePath = '/tmp/storage/database.sqlite';
+    if (!file_exists($sqlitePath)) {
+        @touch($sqlitePath);
+    }
+    if (empty(getenv('DB_DATABASE')) && empty($_ENV['DB_DATABASE'])) {
+        $envVars['DB_DATABASE'] = $sqlitePath;
+    }
+}
+
+foreach ($envVars as $key => $val) {
+    putenv("{$key}={$val}");
+    $_ENV[$key] = $val;
+    $_SERVER[$key] = $val;
 }
 
 // Require composer autoloader
@@ -80,15 +108,8 @@ try {
         header('Content-Type: text/html; charset=UTF-8');
     }
 
-    $isDebug = getenv('APP_DEBUG') === 'true' || ($_ENV['APP_DEBUG'] ?? '') === 'true';
-
-    if ($isDebug) {
-        echo '<h1>500 Internal Server Error</h1>';
-        echo '<p><strong>' . htmlspecialchars(get_class($e) . ': ' . $e->getMessage()) . '</strong></p>';
-        echo '<p>in <code>' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</code></p>';
-        echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-    } else {
-        echo '<h1>500 Internal Server Error</h1>';
-        echo '<p>An unexpected error occurred. Please check your Vercel Function Logs for details.</p>';
-    }
+    echo '<h1>500 Internal Server Error</h1>';
+    echo '<p style="color:#d9534f; font-size:1.1rem;"><strong>' . htmlspecialchars(get_class($e) . ': ' . $e->getMessage()) . '</strong></p>';
+    echo '<p>File: <code>' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</code></p>';
+    echo '<pre style="background:#f8f9fa; padding:12px; border:1px solid #ddd; border-radius:4px; overflow-x:auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
 }
