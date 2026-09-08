@@ -45,6 +45,9 @@ foreach ($envVars as $key => $val) {
     $_SERVER[$key] = $val;
 }
 
+// Force APP_DEBUG=true during debugging to see the exact error
+$envVars['APP_DEBUG'] = 'true';
+
 // Fallback environment configurations for serverless environment
 if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY']) && empty($_SERVER['APP_KEY'])) {
     $envVars['APP_KEY'] = 'base64:8Cmd4E2JkjqA/GkDhtgSQMI5pRqsJ7KWUrhEF0PvX7U=';
