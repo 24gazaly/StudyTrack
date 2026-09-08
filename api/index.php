@@ -45,8 +45,9 @@ foreach ($envVars as $key => $val) {
     $_SERVER[$key] = $val;
 }
 
-// Force APP_DEBUG=true during debugging to see the exact error
-$envVars['APP_DEBUG'] = 'true';
+if (empty(getenv('APP_DEBUG')) && empty($_ENV['APP_DEBUG']) && empty($_SERVER['APP_DEBUG'])) {
+    $envVars['APP_DEBUG'] = 'false';
+}
 $envVars['APP_MAINTENANCE_DRIVER'] = 'file';
 
 // Fallback environment configurations for serverless environment
